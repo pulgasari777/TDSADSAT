@@ -1,0 +1,1103 @@
+<html dir="ltr" lang="en" suppresshydrationwarning="true" data-lt-installed="true"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><script src="REAL%20DASHBOARD%20REAL_files/dashboard.min.js"></script><style id="plotly.js-style-global"></style><style id="plotly.js-style-global"></style><style id="plotly.js-style-global"></style>
+<style id="plotly.js-style-modebar-a53847"></style><style id="plotly.js-style-modebar-e34bce"></style><style id="plotly.js-style-modebar-dbd206"></style><style id="plotly.js-style-modebar-1cbbc9"></style><style id="plotly.js-style-modebar-fde44d"></style><style id="plotly.js-style-modebar-148f01"></style></head><body class="bodycolor"><div id="inc_modal"></div>
+<script>
+
+function applydbfilter(cols,chart,xy, colname){
+	
+		var filtercolid =  "#"+colname;
+		var selected = [];
+		selected = $(filtercolid).val();
+		for (i=0; i<cols.length; i++) {
+		 
+		 	if (xy[i]=="X") {
+			var update = {
+					x: [selected],
+					values: [selected]
+				} 
+			} else {
+			var update = {
+				    y: [selected],
+					labels: [selected]
+				} 
+			}
+		
+			DashboardBuilder.restyle('col'+cols[i], update); 
+		}	
+	
+			
+}
+
+function applydatefilter(start, end,cols,chart,xy, colname, data1, data2) {
+
+		datax = data1[0];
+		datay = data2[0];
+		fromDate=new Date(start);
+		toDate=new Date(end);
+
+		let newx = [];
+		let newy = [];
+		j=0;
+		for (i=0; i<datax.length; i++) {
+			d = new Date(datax[i]);
+			if (d >= fromDate && d <= toDate) {
+				newx[j] = datax[i];
+				newy[j]=datay[i];
+				j++;
+			}
+		}
+
+
+		for (i=0; i<cols.length; i++) {
+		 
+		 	if (xy[i]=="X") {
+			var update = {
+					x: [newx],
+					values: [newx],
+
+				} 
+			} else {
+				var update = {
+
+					y: [newx],
+					labels: [newx]
+				}
+				
+			}
+		
+			DashboardBuilder.restyle('col'+cols[i], update); 
+		}
+	
+}
+
+function applynumberfilter(start,end,cols,chart,xy, colname, data1, data2) {
+	
+		if (xy=="X") {
+		datax = data1[0];
+		datay = data2[0];
+		var newx = datax.filter(
+				function (v) {
+					return v <= end && v >= start;
+				}
+		);
+		} else {
+			datax = data2[0];
+			datay = data1[0];
+			var newy = datay.filter(
+				function (v) {
+					return v <= end && v >= start;
+				}
+			);
+		}
+
+		
+		for (i=0; i<cols.length; i++) {
+		 	if (xy[i]=="X") {
+			var update = {
+					x: [newx],
+					values: [newx],
+					y: [newy],
+					labels: [newy]
+				} 
+			} else {
+				var update = {
+					x: [newy],
+					values: [newy],
+					y: [newx],
+					labels: [newx]
+				}
+				
+			}
+		
+			DashboardBuilder.restyle('col'+cols[i], update); 
+		}
+	
+}
+
+function filtersetting (data, col, label, layout) {
+var html = '<div class="border bg-light col col-12 d-flex px-3 "><h5 class="d-flex float-start"> '+label+'</h5><button type="button" class="fa fa-window-close position-absolute top-0 end-0 " style="font-size:26px;color:#d14232;border:0;"  data-dismiss="modal" aria-hidden="true" onclick="State.closeDialog();"></button></div><div class="m-4">';
+
+for (i = 0; i < data.length; i++) {
+html = html + '<h7 style="margin-top:5px;">Trace '+(i+1);
+// x-axis
+if (data[i].type=='pie' || data[i].type=='donut') {
+	xvalue = data[i].values;
+	yvalue = data[i].labels;
+} else {
+	xvalue = data[i].x;
+	yvalue = data[i].y;
+}
+
+
+html = html + '</h7><div class="row"><div class="col col-md-6 "><h6 style="margin-left:20px;">X-axis &nbsp;<i id="sort-x-icon'+i+'" class="fa fa-sort-amount-asc" onclick=x_y_sort(xvalue,yvalue,'+i+',1);  onmouseover="" style="cursor: pointer;"></i></h6>';
+html = html +'<select name="x-filter" id="x-filter'+i+'" style="font-size:11px;" class="form-control form-control-sm" multiple>';
+
+
+	for (j = 0; j < xvalue.length; j++) {
+		html = html +'<option value="'+xvalue[j]+'" selected="selected">'+xvalue[j]+'</option>';
+	}
+
+
+html = html +'</select></div>';
+
+// y-axis
+
+html = html + '<div class="col col-md-6 "><h6><span class="position-absolute start-50"><i class="fa fa-exchange" id="exchange'+i+'" data-exchange="x2y" onclick=exchange(xvalue,yvalue,'+i+');  onmouseover="" style="cursor: pointer;"></i></span><span class="mx-4">Y-axis  &nbsp;<i id="sort-y-icon'+i+'" class="fa fa-sort-amount-asc" onclick=x_y_sort(xvalue,yvalue,'+i+',2);  onmouseover="" style="cursor: pointer;"></i></span></h6>';
+html = html +'<select name="y-filter" id="y-filter'+i+'" style="font-size:11px;"  class="form-control form-control-sm" multiple>';
+
+
+	for (j = 0; j < yvalue.length; j++) {
+	html = html +'<option value="'+yvalue[j]+'" selected="selected">'+yvalue[j]+'</option>';
+	}
+
+
+html = html +'</select></div></div><hr/>';
+}
+
+html = html +'</div>';
+
+html = html +'<div class="col col-12 w-100 mt-2 border bg-light"><div class="p-2 d-flex justify-content-end">';
+html = html +'<button type="button" class="btn btn-sm btn-default" id="reset"><i class="fa fa-undo"></i></button>';
+html = html +'<button type="button" class="btn btn-sm btn-primary " id="apply"><i class="fa fa-check"></i></button>';
+html = html +'</div></div>';
+
+
+
+view(true, html);	
+
+document.getElementById("reset").addEventListener("click",function(e){
+    window.location.href = window.location.href;
+	view(false, "");
+},false);
+
+
+
+document.getElementById("apply").addEventListener("click",function(e){
+	for (i = 0; i < data.length; i++) {
+		
+		var selectedx = [];
+			for (var option of document.getElementById('x-filter'+i).options)
+			{
+				if (option.selected) {
+					selectedx.push(option.value);
+				}
+			}
+
+		var selectedy = [];
+		for (var option of document.getElementById('y-filter'+i).options)
+		{
+			if (option.selected) {
+				selectedy.push(option.value);
+			}
+		}
+		
+		
+		if (data[i].type=='pie' || data[i].type=='donut') {
+			var update = {
+					values: [selectedx], // N.B. notice the extra []
+					labels: [selectedy]
+			}
+		} else {
+			var update = {
+					x: [selectedx], // N.B. notice the extra []
+					y: [selectedy]
+			}
+		}
+	}
+	
+
+	DashboardBuilder.restyle('col'+col, update); 
+
+
+   State.closeDialog();
+	 
+},false);
+
+}
+
+
+function showTable (data, col, xaxisCol, yaxisCol, mheader, llm, layout) {
+var xvalue = {};
+var yvalue = {};
+var tableCol = {};
+var tableRow = {};
+
+html = '<table class="table table-striped" id="table-csv">';
+html = html +'  <thead class="thead-dark text-light bg-dark"><tr>';
+for (var key in xaxisCol) {
+	tableCol[xaxisCol[key]]=xaxisCol[key];
+}
+for (var key in yaxisCol) {
+	tableCol[yaxisCol[key]]=yaxisCol[key];
+}
+
+for (var key in tableCol) {
+	html = html +'<th scope="col">'+tableCol[key]+'</th>';
+}
+	
+html = html +'</tr></thead>';
+
+html = html +'<tbody>';
+
+
+for (i = 0; i < data.length; i++) {
+if (data[i].type=='pie' || data[i].type=='donut') {
+	tableRow[xaxisCol[i]] = data[i].values;
+	tableRow[yaxisCol[i]] = data[i].labels;
+} else {
+	tableRow[xaxisCol[i]] = data[i].x;
+	tableRow[yaxisCol[i]] = data[i].y;
+}
+}
+
+for (i = 0; i < tableRow[yaxisCol[0]].length; i++) {
+html = html +'<tr>';
+for (var key in tableRow) {
+	    html = html +'  <td>'+tableRow[key][i]+'</td>';
+}
+html = html +'</tr>';
+if (i === 10) break;
+}
+	
+html = html +'</tbody>';
+html = html +'</table>';
+
+	
+//view(true, html);	
+tableView(true, html,mheader, llm, col, data, layout);	
+
+
+}
+// showTable end
+
+
+
+function x_y_sort(x, y, i, o) {
+	
+ var list = [];
+  for (var j = 0; j < x.length; j++)  {
+	if (Number(x[j])) {
+		x[j] = Number(x[j]); 
+	}
+	if (Number(y[j])) {
+		y[j] = Number(y[j]); 
+	}
+    list.push({'x': x[j], 'y': y[j]});
+  }
+
+  
+ if (o==1) { // if X data
+	if (document.getElementById("sort-x-icon"+i).classList.contains('fa-sort-amount-asc') ){
+		list.sort(function(a, b) {
+		return ((a.x < b.x) ? -1 : ((a.x == b.x) ? 0 : 1));
+		});
+		document.getElementById("sort-x-icon"+i).className = 'fa fa-sort-amount-desc';
+	} else {
+		list.sort(function(a, b) {
+		return ((a.x > b.x) ? -1 : ((a.x == b.x) ? 0 : 1));
+		});
+		document.getElementById("sort-x-icon"+i).className = 'fa fa-sort-amount-asc';
+	}
+ } else {  // Y data
+	 if (document.getElementById("sort-y-icon"+i).classList.contains('fa-sort-amount-asc') ){
+		list.sort(function(a, b) {
+		return ((a.y < b.y) ? -1 : ((a.y == b.y) ? 0 : 1));
+		});
+		document.getElementById("sort-y-icon"+i).className = 'fa fa-sort-amount-desc';
+	} else {
+		list.sort(function(a, b) {
+		return ((a.y > b.y) ? -1 : ((a.y == b.y) ? 0 : 1));
+		});
+		document.getElementById("sort-y-icon"+i).className = 'fa fa-sort-amount-asc';
+	} 
+ } 
+
+	selectxid = 'x-filter'+i;
+	selectyid = 'y-filter'+i;
+	var xhtml="";
+	var yhtml="";
+
+  for (var h = 0; h < list.length; h++) {
+	xhtml += '<option value="'+list[h].x+'" selected="selected">'+list[h].x+'</option>';
+	document.getElementById(selectxid).innerHTML = xhtml;
+	yhtml += '<option value="'+list[h].y+'" selected="selected">'+list[h].y+'</option>';
+	document.getElementById(selectyid).innerHTML = yhtml;
+  }
+ 
+}
+
+
+function exchange(x, y, i) {
+	selectxid = 'x-filter'+i;
+	selectyid = 'y-filter'+i;
+	var xhtml="";
+	var yhtml="";
+
+	e = document.getElementById('exchange'+i);
+	d = "data-exchange";
+
+		t = x;
+		x = y;
+		y = t;
+
+	if (e.getAttribute(d)=="x2y") {
+	for (var h = 0; h < x.length; h++) {
+		xhtml += '<option value="'+x[h]+'" selected="selected">'+x[h]+'</option>';
+		document.getElementById(selectxid).innerHTML = xhtml;
+		yhtml += '<option value="'+y[h]+'" selected="selected">'+y[h]+'</option>';
+		document.getElementById(selectyid).innerHTML = yhtml;
+    }
+	  e.setAttribute(d, "y2x"); 
+	} else {
+	for (var h = 0; h < x.length; h++) {
+		xhtml += '<option value="'+y[h]+'" selected="selected">'+y[h]+'</option>';
+		document.getElementById(selectxid).innerHTML = xhtml;
+		yhtml += '<option value="'+x[h]+'" selected="selected">'+x[h]+'</option>';
+		document.getElementById(selectyid).innerHTML = yhtml;
+    }
+	  e.setAttribute(d, "x2y"); 
+	}
+ 
+}
+
+
+window.State = {
+  isOpen: false,
+  openDialog: function(key){
+
+    State.isOpen = true;
+    view()
+  },
+  closeDialog: function(){
+    State.isOpen = false;
+    view()
+  }
+}
+
+function view (ops, html) {
+ var modalCls =  ops
+    ? "inc_modal inc_modal-shown"  
+    : "inc_modal inc_modal-hidden"
+  inc_modal.innerHTML =  `
+    <div class="${modalCls} ">
+      <div class="inc_modal-content">`
+        +html+
+      `</div>
+    </div>
+  `
+}
+
+function tableView (ops, html,mheader, llm, col, data, layout) {
+	DashboardBuilder.newPlot('table-chart', data, layout, {staticPlot: true, responsive: true});
+    $("#table-content").html (html);
+	
+	 DashboardBuilder.relayout('table-chart', {
+                        width: 600,
+                        height: 360
+                    });
+
+
+
+if (llm) {
+$("#llm-content").html (llm);
+$("#llm-content").addClass ("p-3 mt-5 bg-light text-dark border");
+}
+
+$("#modal-header").html (mheader);
+var myModal = new bootstrap.Modal(document.getElementById('table-modal'), {  keyboard: false });
+myModal.show();
+  
+}
+
+
+function collision($div1, $div2) {
+	  var x1 = $div1.offset().left;
+	  var w1 = 40;
+	  var r1 = x1 + w1;
+	  var x2 = $div2.offset().left;
+	  var w2 = 40;
+	  var r2 = x2 + w2;
+		
+	  if (r1 < x2 || x1 > r2) return false;
+	  return true;
+	  
+	}
+
+function numShort (n) {
+maxv = n;
+maxu ='';
+if (maxv > 1000000) {
+maxv =  (maxv / 1000000).toFixed(1).replace(/\.0$/, '');;
+maxu = 'M';
+} else {
+if (maxv >= 1000) {
+maxv = (maxv / 1000).toFixed(1).replace(/\.0$/, '');
+maxu = 'K';
+}
+}
+return [maxv, maxu];
+}
+
+function download_table_as_csv(table_id, separator = ',') {
+    var rows = document.querySelectorAll('table#' + table_id + ' tr');
+    var csv = [];
+    for (var i = 0; i < rows.length; i++) {
+        var row = [], cols = rows[i].querySelectorAll('td, th');
+        for (var j = 0; j < cols.length; j++) {
+            var data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/(\s\s)/gm, ' ')
+            data = data.replace(/"/g, '""');
+            row.push('"' + data + '"');
+        }
+        csv.push(row.join(separator));
+    }
+    var csv_string = csv.join('\n');
+    var filename = 'export_chart.csv';
+    var link = document.createElement('a');
+    link.style.display = 'none';
+    link.setAttribute('target', '_blank');
+    link.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv_string));
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+
+function pdfDownload(idd) { 
+
+
+	const id = document.getElementById(idd);
+	
+	var scrollHeight = id.scrollHeight;
+	var clientHeight = id.clientHeight;
+	
+	var HTML_Width = $(id).width();
+    var HTML_Height = $(id).height();
+    var top_left_margin = 15;
+    var PDF_Width = HTML_Width + (top_left_margin * 2);
+    var PDF_Height = (PDF_Width * 1.5) + (top_left_margin * 2);
+    var canvas_image_height = window.outerHeight*1.5;
+    var canvas_image_width = window.outerWidth/2;
+	
+	
+html2canvas($(id)[0], {
+            allowTaint: true,
+            useCORS: true,
+            logging: false,
+            height: scrollHeight + clientHeight-40,
+            windowHeight: scrollHeight + clientHeight,
+}).then(function (canvas) {
+        var imgData = canvas.toDataURL("image/jpeg", 1.0);
+        var pdf = new jsPDF('p', 'pt', [PDF_Width, PDF_Height]);
+        pdf.addImage(imgData, 'JPG', (top_left_margin+40), top_left_margin, canvas_image_width, canvas_image_height);
+        pdf.save("dashboardbuilder.pdf");
+    });
+	
+}
+
+function load(url) {
+	url=encodeURI(url);
+	var v="<div class='spinner-border' style='width: 3rem; height: 3rem;color: #8389c7;position:fixed;left:50%;top:50%;' role='status'></div>";
+	$('#details').html(v);
+	$('#details').load(url); 
+ }
+</script>
+
+<div class="modal fade " id="table-modal" style="display:none;" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-keyboard="false" data-backdrop="static">
+  <div class="modal-dialog modal-lg modal-dialog-centered  modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header"><span id="modal-header"></span>
+	  <div class="dropdown">
+  <button class="close p-1" style="border:0;" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+    <span class="fa fa-bars" aria-hidden="true"></span>
+  </button>
+  <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1" style="width:100px;">
+    <li><a class="dropdown-item" href="javascript:void(0" id="tableModal-btn-csv-downoad" onclick="download_table_as_csv('table-csv');">CSV Download</a></li>
+	<li><a class="dropdown-item" href="javascript:void(0);" id="tableModal-btn-pdf-downoad" onclick="pdfDownload('observations');">PDF Download</a></li>
+    <li><a class="dropdown-item" href="javascript:void(0" id="tableModal-btn-close" onclick="$('#table-modal').modal('hide');">Close</a></li>
+  </ul>
+</div>
+		
+      </div>
+      <div class="modal-body" id="observations"> 
+		<div class="pb-5 d-flex justify-content-center">
+			<div id="table-chart"></div>
+		</div>
+		<div id="table-content"></div>
+		<div id="llm-content" style="text-align:left; "></div>	 
+	  </div>
+      <div class="py-3 mx-3 d-flex justify-content-end">
+	  <button class="btn p-0 m-0" onclick="download_table_as_csv('table-csv');" id="downloadCSV" type="button"><span class="fas fa-file-csv" style="font-size:24px;color:#307342;"></span>&nbsp;</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<style>
+#inc_modal{
+}
+
+.inc_modal-shown {
+  display: block;
+}
+
+.inc_modal-hidden {
+  display: none;
+}
+
+.inc_modal {
+    position: fixed; 
+    z-index: 1; 
+    padding-top: 150px;
+    left: 0;
+    top: 0;
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgb(222,0,0);
+    background-color: rgba(2,0,0,0.5); 
+}
+
+  /* Modal Content */
+.inc_modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 0px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    position:relative;
+    animation:animetop 0.4s
+}
+
+@keyframes animetop{
+  from{top:-300px;opacity:0} 
+  to{top:0;opacity:1
+  }
+}
+
+.modal-close {
+  
+  cursor: pointer;
+  right:0;
+}
+
+.modal-close:hover {
+  box-shadow: 0 0 5px rgba(0,0,0,0.4);
+}
+</style>
+
+<style>
+
+.value {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  margin: 0 0 0 -20px;
+  width: 40px;
+  text-align: center;
+  display: block;
+  
+  /* optional */
+  
+  font-weight: normal;
+  font-family: Verdana,Arial,sans-serif;
+  font-size: 9px;
+  color: #333;
+}
+
+.price-range-both.value {
+  width: 100px;
+  margin: 0 0 0 -50px;
+  top: 26px; 
+}
+
+.price-range-both {
+  display: none; 
+}
+#slider {top:33px;}
+.value i {
+  font-style: normal;
+}
+.ui-slider-handle {margin-top:3px;}
+
+.number-column-name{
+	z-index:2;
+	position:relative;
+	font-size:12px;
+	color:gray;
+}
+</style>
+
+
+
+<link rel="stylesheet" href="REAL%20DASHBOARD%20REAL_files/font-awesome.min.css">
+
+
+<title>Dashboard Builder</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="shortcut icon" href="REAL%20DASHBOARD%20REAL_files/favicon.ico" type="image/x-icon">
+<link rel="stylesheet" href="REAL%20DASHBOARD%20REAL_files/jquery-ui.css">
+<link rel="stylesheet" href="REAL%20DASHBOARD%20REAL_files/vanilla-datetimerange-picker.css">
+<link rel="stylesheet" href="REAL%20DASHBOARD%20REAL_files/bootstrap-select.min.css">
+<script src="REAL%20DASHBOARD%20REAL_files/jquery.min.js"></script>
+
+<script src="REAL%20DASHBOARD%20REAL_files/bootstrap.bundle.min.js"></script>
+<script src="REAL%20DASHBOARD%20REAL_files/bootstrap-select.min.js"></script>
+<script src="REAL%20DASHBOARD%20REAL_files/jquery-ui.js"></script>	
+<script src="REAL%20DASHBOARD%20REAL_files/html2canvas.min.js" type="text/javascript"></script>
+<script src="REAL%20DASHBOARD%20REAL_files/jspdf.min.js"></script>
+		
+<link rel="stylesheet" href="REAL%20DASHBOARD%20REAL_files/bootstrap.min.css"> <!-- Bootstrap CSS file, change the path accordingly -->
+<style>
+.bodycolor {background-color:#eee9dd;}
+.bgcolor {background:#f8f3e7;}
+.font-color {color:#e9c46a;}
+.card-header {line-height:0.7em;}
+#number {font-size:32px; font-weight:bold;text-align:center;margin-top:-10px;}
+#number_legand {font-size:11px; text-align:center;}
+.panel-body {  box-shadow: 5px 5px 35px  #e0e0e0;color:#787b80;}
+</style>
+
+
+
+ 
+
+
+<!-- Filter Starts -->
+	
+<!-- Filter end -->
+<style>
+@media screen and (min-width: 960px) {
+.id0 {position:absolute;top:-36px;}.id1 {position:absolute;top:-38px;}}
+</style>
+<p><br>&nbsp;</p>
+
+<div id="npl-query-data" class="container-fluid main-container position-relative">
+<div id="details" class="col col-md-12 col-lg-12 col-xs-12">
+
+<div class="row"><div class="col-md-4 col-xs-12  id0"><div class="card-default shadow ">	<div class="card-body bgcolor" style="background:#ffffff" ;="">	<span class="d-flex justify-content-start mx-2 font-color" style="color:#c8a346;"> Tidewater DSA 2026 Membership </span>		<!-- Analytics -->
+				
+		<!-- Sorting Data End -->
+
+  		<div id="col0" class="js-plotly-plot"><!-- chart will be drawn inside this DIV --><div class="plot-container plotly"><div class="svg-container" style="position: relative; width: 512.883px; height: 380px;"><svg class="main-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="512.88330078125" height="380" style="background: rgb(255, 255, 255);"><defs id="defs-fde44d"><g class="clips"><clipPath id="clipfde44dxyplot" class="plotclip"><rect width="433" height="270"></rect></clipPath><clipPath class="axesclip" id="clipfde44dx"><rect x="60" y="0" width="433" height="380"></rect></clipPath><clipPath class="axesclip" id="clipfde44dy"><rect x="0" y="30" width="512.88330078125" height="270"></rect></clipPath><clipPath class="axesclip" id="clipfde44dxy"><rect x="60" y="30" width="433" height="270"></rect></clipPath></g><g class="gradients"></g></defs><g class="bglayer"></g><g class="draglayer cursor-crosshair"><g class="xy"><rect class="nsewdrag drag" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="60" y="30" width="433" height="270"></rect><rect class="nwdrag drag cursor-nw-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="40" y="10" width="20" height="20"></rect><rect class="nedrag drag cursor-ne-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="493" y="10" width="20" height="20"></rect><rect class="swdrag drag cursor-sw-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="40" y="300" width="20" height="20"></rect><rect class="sedrag drag cursor-se-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="493" y="300" width="20" height="20"></rect><rect class="ewdrag drag cursor-ew-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="103.30000000000001" y="300.5" width="346.40000000000003" height="20"></rect><rect class="wdrag drag cursor-w-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="60" y="300.5" width="43.300000000000004" height="20"></rect><rect class="edrag drag cursor-e-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="449.7" y="300.5" width="43.300000000000004" height="20"></rect><rect class="nsdrag drag cursor-ns-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="39.5" y="57" width="20" height="216"></rect><rect class="sdrag drag cursor-s-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="39.5" y="273" width="20" height="27"></rect><rect class="ndrag drag cursor-n-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="39.5" y="30" width="20" height="27"></rect></g></g><g class="layer-below"><g class="imagelayer"></g><g class="shapelayer"></g></g><g class="cartesianlayer"><g class="subplot xy"><g class="layer-subplot"><g class="shapelayer"></g><g class="imagelayer"></g></g><g class="gridlayer"><g class="x"><path class="xgrid crisp" transform="translate(85.4,0)" d="M0,30v270" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(120.15,0)" d="M0,30v270" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(154.89,0)" d="M0,30v270" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(189.64,0)" d="M0,30v270" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(224.38,0)" d="M0,30v270" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(259.13,0)" d="M0,30v270" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(293.87,0)" d="M0,30v270" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(328.62,0)" d="M0,30v270" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(363.36,0)" d="M0,30v270" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(398.11,0)" d="M0,30v270" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(432.85,0)" d="M0,30v270" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(467.6,0)" d="M0,30v270" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path></g><g class="y"><path class="ygrid crisp" transform="translate(0,282.75)" d="M60,0h433" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ygrid crisp" transform="translate(0,226.68)" d="M60,0h433" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ygrid crisp" transform="translate(0,170.61)" d="M60,0h433" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ygrid crisp" transform="translate(0,114.54)" d="M60,0h433" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ygrid crisp" transform="translate(0,58.46)" d="M60,0h433" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path></g></g><g class="zerolinelayer"></g><path class="xlines-below"></path><path class="ylines-below"></path><g class="overlines-below"></g><g class="xaxislayer-below"></g><g class="yaxislayer-below"></g><g class="overaxes-below"></g><g class="plot" transform="translate(60, 30)" clip-path="url('#clipfde44dxyplot')"><g class="scatterlayer mlayer"><g class="trace scatter tracef34530" style="stroke-miterlimit: 2; opacity: 1;"><g class="fills"></g><g class="errorbars"></g><g class="lines"><path class="js-line" style="vector-effect: non-scaling-stroke; fill: none; stroke: rgb(164, 36, 59); stroke-opacity: 1; stroke-width: 2px; opacity: 1;" d="M25.4,252.75L60.15,219.11L94.89,207.89L129.64,207.89L164.38,73.32L199.13,118.18L233.87,84.54L268.62,84.54L303.36,50.89L338.11,73.32L372.85,62.11L407.6,17.25"></path></g><g class="points"><path class="point" transform="translate(25.4,252.75)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(60.15,219.11)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(94.89,207.89)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(129.64,207.89)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(164.38,73.32)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(199.13,118.18)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(233.87,84.54)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(268.62,84.54)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(303.36,50.89)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(338.11,73.32)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(372.85,62.11)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(407.6,17.25)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path></g><g class="text"></g></g></g></g><g class="overplot"></g><path class="xlines-above crisp" style="fill: none; stroke-width: 1px; stroke: rgb(68, 68, 68); stroke-opacity: 1;" d="M59,300.5H493"></path><path class="ylines-above crisp" style="fill: none; stroke-width: 1px; stroke: rgb(68, 68, 68); stroke-opacity: 1;" d="M59.5,30V300"></path><g class="overlines-above"></g><g class="xaxislayer-above"><g class="xtick"><text text-anchor="start" x="0" y="315.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(200, 163, 70); fill-opacity: 1; white-space: pre;" data-unformatted="2026-01-02" data-math="N" transform="translate(85.4,0) rotate(30,0,309.4)">2026-01-02</text></g><g class="xtick"><text text-anchor="start" x="0" y="315.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(200, 163, 70); fill-opacity: 1; white-space: pre;" data-unformatted="2026-01-09" data-math="N" transform="translate(120.15,0) rotate(30,0,309.4)">2026-01-09</text></g><g class="xtick"><text text-anchor="start" x="0" y="315.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(200, 163, 70); fill-opacity: 1; white-space: pre;" data-unformatted="2026-01-16" data-math="N" transform="translate(154.89,0) rotate(30,0,309.4)">2026-01-16</text></g><g class="xtick"><text text-anchor="start" x="0" y="315.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(200, 163, 70); fill-opacity: 1; white-space: pre;" data-unformatted="2026-01-23" data-math="N" transform="translate(189.64,0) rotate(30,0,309.4)">2026-01-23</text></g><g class="xtick"><text text-anchor="start" x="0" y="315.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(200, 163, 70); fill-opacity: 1; white-space: pre;" data-unformatted="2026-01-30" data-math="N" transform="translate(224.38,0) rotate(30,0,309.4)">2026-01-30</text></g><g class="xtick"><text text-anchor="start" x="0" y="315.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(200, 163, 70); fill-opacity: 1; white-space: pre;" data-unformatted="2026-02-06" data-math="N" transform="translate(259.13,0) rotate(30,0,309.4)">2026-02-06</text></g><g class="xtick"><text text-anchor="start" x="0" y="315.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(200, 163, 70); fill-opacity: 1; white-space: pre;" data-unformatted="2026-02-13" data-math="N" transform="translate(293.87,0) rotate(30,0,309.4)">2026-02-13</text></g><g class="xtick"><text text-anchor="start" x="0" y="315.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(200, 163, 70); fill-opacity: 1; white-space: pre;" data-unformatted="2026-02-20" data-math="N" transform="translate(328.62,0) rotate(30,0,309.4)">2026-02-20</text></g><g class="xtick"><text text-anchor="start" x="0" y="315.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(200, 163, 70); fill-opacity: 1; white-space: pre;" data-unformatted="2026-02-27" data-math="N" transform="translate(363.36,0) rotate(30,0,309.4)">2026-02-27</text></g><g class="xtick"><text text-anchor="start" x="0" y="315.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(200, 163, 70); fill-opacity: 1; white-space: pre;" data-unformatted="2026-03-06" data-math="N" transform="translate(398.11,0) rotate(30,0,309.4)">2026-03-06</text></g><g class="xtick"><text text-anchor="start" x="0" y="315.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(200, 163, 70); fill-opacity: 1; white-space: pre;" data-unformatted="2026-03-13" data-math="N" transform="translate(432.85,0) rotate(30,0,309.4)">2026-03-13</text></g><g class="xtick"><text text-anchor="start" x="0" y="315.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(200, 163, 70); fill-opacity: 1; white-space: pre;" data-unformatted="2026-03-20" data-math="N" transform="translate(467.6,0) rotate(30,0,309.4)">2026-03-20</text></g></g><g class="yaxislayer-above"><g class="ytick"><text text-anchor="end" x="56.6" y="4.199999999999999" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(200, 163, 70); fill-opacity: 1; white-space: pre;" data-unformatted="240" data-math="N" transform="translate(0,282.75)">240</text></g><g class="ytick"><text text-anchor="end" x="56.6" y="4.199999999999999" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(200, 163, 70); fill-opacity: 1; white-space: pre;" data-unformatted="245" data-math="N" transform="translate(0,226.68)">245</text></g><g class="ytick"><text text-anchor="end" x="56.6" y="4.199999999999999" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(200, 163, 70); fill-opacity: 1; white-space: pre;" data-unformatted="250" data-math="N" transform="translate(0,170.61)">250</text></g><g class="ytick"><text text-anchor="end" x="56.6" y="4.199999999999999" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(200, 163, 70); fill-opacity: 1; white-space: pre;" data-unformatted="255" data-math="N" transform="translate(0,114.54)">255</text></g><g class="ytick"><text text-anchor="end" x="56.6" y="4.199999999999999" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(200, 163, 70); fill-opacity: 1; white-space: pre;" data-unformatted="260" data-math="N" transform="translate(0,58.46)">260</text></g></g><g class="overaxes-above"></g></g></g><g class="polarlayer"></g><g class="ternarylayer"></g><g class="geolayer"></g><g class="funnelarealayer"></g><g class="pielayer"></g><g class="sunburstlayer"></g><g class="glimages"></g></svg><div class="gl-container"></div><svg class="main-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="512.88330078125" height="380"><defs id="topdefs-fde44d"><g class="clips"></g></defs><g class="indicatorlayer"></g><g class="layer-above"><g class="imagelayer"></g><g class="shapelayer"></g></g><g class="infolayer"><g class="g-gtitle"></g><g class="g-xtitle" transform="translate(0,18.483596801757812)"><text class="xtitle" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 14px; fill: rgb(200, 163, 70); opacity: 1; font-weight: normal; white-space: pre;" x="276.5" y="352" text-anchor="middle" data-unformatted="Date" data-math="N">Date</text></g><g class="g-ytitle"><text class="ytitle" transform="rotate(-90,22,165)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 14px; fill: rgb(200, 163, 70); opacity: 1; font-weight: normal; white-space: pre;" x="22" y="165" text-anchor="middle" data-unformatted="MIGS Count" data-math="N">MIGS Count</text></g></g><g class="menulayer"></g><g class="zoomlayer"></g></svg><div class="modebar-container" style="position: absolute; top: 0px; right: 0px; width: 100%;"><div id="modebar-fde44d" class="modebar modebar--hover ease-bg"><div class="modebar-group"><a rel="tooltip" class="modebar-btn" data-title="Download graph" data-toggle="false" data-gravity="n"><svg viewBox="0 0 1000 1000" class="icon" height="1em" width="1em"><path d="m500 450c-83 0-150-67-150-150 0-83 67-150 150-150 83 0 150 67 150 150 0 83-67 150-150 150z m400 150h-120c-16 0-34 13-39 29l-31 93c-6 15-23 28-40 28h-340c-16 0-34-13-39-28l-31-94c-6-15-23-28-40-28h-120c-55 0-100-45-100-100v-450c0-55 45-100 100-100h800c55 0 100 45 100 100v450c0 55-45 100-100 100z m-400-550c-138 0-250 112-250 250 0 138 112 250 250 250 138 0 250-112 250-250 0-138-112-250-250-250z m365 380c-19 0-35 16-35 35 0 19 16 35 35 35 19 0 35-16 35-35 0-19-16-35-35-35z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a></div><div class="modebar-group"><a rel="tooltip" class="modebar-btn" data-title="Zoom in" data-attr="zoom" data-val="in" data-toggle="false" data-gravity="n"><svg viewBox="0 0 875 1000" class="icon" height="1em" width="1em"><path d="m1 787l0-875 875 0 0 875-875 0z m687-500l-187 0 0-187-125 0 0 187-188 0 0 125 188 0 0 187 125 0 0-187 187 0 0-125z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a><a rel="tooltip" class="modebar-btn" data-title="Zoom out" data-attr="zoom" data-val="out" data-toggle="false" data-gravity="n"><svg viewBox="0 0 875 1000" class="icon" height="1em" width="1em"><path d="m0 788l0-876 875 0 0 876-875 0z m688-500l-500 0 0 125 500 0 0-125z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a><a rel="tooltip" class="modebar-btn" data-title="Reset" data-attr="zoom" data-val="auto" data-toggle="false" data-gravity="n"><svg viewBox="0 0 1000 1000" class="icon" height="1em" width="1em"><path d="m250 850l-187 0-63 0 0-62 0-188 63 0 0 188 187 0 0 62z m688 0l-188 0 0-62 188 0 0-188 62 0 0 188 0 62-62 0z m-875-938l0 188-63 0 0-188 0-62 63 0 187 0 0 62-187 0z m875 188l0-188-188 0 0-62 188 0 62 0 0 62 0 188-62 0z m-125 188l-1 0-93-94-156 156 156 156 92-93 2 0 0 250-250 0 0-2 93-92-156-156-156 156 94 92 0 2-250 0 0-250 0 0 93 93 157-156-157-156-93 94 0 0 0-250 250 0 0 0-94 93 156 157 156-157-93-93 0 0 250 0 0 250z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a></div></div></div><svg class="main-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="512.88330078125" height="380"><g class="hoverlayer"></g></svg></div></div></div><script>	
+		document.getElementById("tableModal-btn-csv-downoad").innerHTML = "CSV Download";
+		document.getElementById("tableModal-btn-pdf-downoad").innerHTML = "PDF Download";
+		document.getElementById("tableModal-btn-close").innerHTML = "Close";
+		(function(){
+		 window.PLOTLYENV={};
+
+                var gd = document.getElementById("col0")
+                var resizeDebounce = null;
+
+                function resizePlot() {
+                    var bb = gd.getBoundingClientRect();
+                    DashboardBuilder.relayout(gd, {
+                        width: bb.width,
+                        height: bb.height
+                    });
+                }
+
+                
+                window.addEventListener("resize", function() {
+                    if (resizeDebounce) {
+                        window.clearTimeout(resizeDebounce);
+                    }
+                    resizeDebounce = window.setTimeout(resizePlot, 100);
+                });
+
+							
+											
+	
+						var trace1 = {
+													  							 x: ["2026-01-02","2026-01-09","2026-01-16","2026-01-23","2026-01-30","2026-02-06","2026-02-13","2026-02-20","2026-02-27","2026-03-06","2026-03-13","2026-03-20"], 
+						  	 y: ["240","243","244","244","256","252","255","255","258","256","257","261"], 
+							 													  
+						  name:"Members in Good Standing",								
+						  line: {
+						  						  color: "#A4243B"	
+						  						  },  
+						  
+									  marker: {
+																					color: "#A4243B" ,
+																				        line: {
+																																						}
+									  },
+						
+							  
+						  						   
+						   						  						  	type: 'line',
+																					
+						};
+												
+
+											
+
+										
+					
+	
+					
+					
+					var data = [trace1,];
+					 		
+					var layout = {
+					title: false,
+										label: 'High',
+										font: {
+						color: '#c8a346'
+					  },
+					 					paper_bgcolor: '#ffffff',
+					plot_bgcolor: '#ffffff',
+					
+										 
+					 					       legend: {orientation: "v"},
+					 					 
+					 					   height: 380,
+					   					    width: 0,
+					   					  xaxis: {
+						title: 'Date',
+													
+							type: 'category',
+												showticklabels:true,
+												
+						showgrid: true, 
+						showline: true					  }, 
+					  yaxis: {
+						title: 'MIGS Count', 
+																		
+							categoryorder: 'array', 
+							categoryarray: ["240","243","244","244","256","252","255","255","258","256","257","261"],
+												side: 'left',
+						showticklabels:true,
+						showgrid: true, 
+						showline: true					  },
+					  
+				// for multiple yaxis 
+								    // for multiple yaxis end 
+					  
+					   margin: {
+						l: 60, //20,
+						r: 20, //60,
+						b: 80,
+						t: 30,
+						pad: 0
+					  },
+					 					  barmode: 'group'
+					};
+					
+								
+					var toImage = {
+						  name: 'Download graph',
+						  icon: DashboardBuilder.Icons.camera,
+						  click: function(gd) {
+							DashboardBuilder.downloadImage(gd, {
+								filename: 'dashboardbuilder_line0',
+								format: 'png',
+								width: gd._fullLayout.width,
+								height: gd._fullLayout.height
+							  })
+						  }
+						}
+						
+					let tableIcon = {
+						'width':1800,
+						'height': 1500,
+						'path':"m15,12c0,.553-.448,1-1,1H6c-.552,0-1-.447-1-1s.448-1,1-1v-2c0-.553.448-1,1-1s1,.447,1,1v2h1v-5c0-.553.448-1,1-1s1,.447,1,1v5h1v-3c0-.553.448-1,1-1s1,.447,1,1v3c.552,0,1,.447,1,1Zm8.561,11.561c-.293.293-.677.439-1.061.439s-.768-.146-1.061-.439l-5.514-5.514c-1.66,1.225-3.703,1.959-5.92,1.959C4.492,20.006.006,15.52.006,10.006S4.492.006,10.006.006s10,4.486,10,10c0,2.217-.734,4.26-1.959,5.92l5.514,5.514c.586.586.586,1.535,0,2.121Zm-6.561-13.561c0-3.894-3.19-7.05-7.097-6.993-3.714.054-6.842,3.18-6.897,6.894-.058,3.907,3.098,7.099,6.993,7.099,3.831,0,7-3.169,7-7Z",
+						'transform': 'matrix(80 0 0 80 128 -0)'
+						}
+					var xaxisCol = ["List_Date"];
+					var yaxisCol = ["MIGS_Count"];
+										var llm = '';
+					var toTable = {
+						name: 'Analyze Data',
+						icon: tableIcon,
+						click: () => { showTable(data, 0,xaxisCol, yaxisCol, 'Tidewater DSA 2026 Membership', llm, layout )}
+					}
+					
+																	let barbuttons =  [[toImage],['zoomIn2d','zoomOut2d','autoScale2d']];
+													
+					var modeBarManage = {
+					modeBarButtonsToRemove: ['sendDataToCloud'],
+					modeBarButtons: barbuttons,
+					displaylogo: false,
+						showLink: false,
+						plotlyServerURL: "https://dashboardbuilder.net/data-visualization-tool",
+						linkText: 'Powered by DashboardBuilder.net'
+					
+					};
+					
+		
+					DashboardBuilder.newPlot(gd, data, layout,   modeBarManage,{responsive: true} );
+					}());
+
+					var modebarButtons = document.getElementById("col0").querySelectorAll(".modebar-btn");
+					
+					var modebarButtonDataTitles={
+									zoomIn : "Zoom in",
+									zoomOut : "Zoom out",
+									autoscale: "Autoscale",
+					}
+					
+					
+					for (i = 0; i < modebarButtons.length; i++) {
+						
+						var dataTitle = modebarButtons[i].attributes["data-title"].value;
+					  if(dataTitle == modebarButtonDataTitles.zoomIn){  
+							modebarButtons[i].attributes["data-title"].value="Zoom in";
+						}
+					  else if(dataTitle == modebarButtonDataTitles.zoomOut){
+						modebarButtons[i].attributes["data-title"].value="Zoom out";
+					  }
+					  else if(dataTitle == modebarButtonDataTitles.autoscale){
+						modebarButtons[i].attributes["data-title"].value="Reset";
+					  }
+						
+					}
+				
+				//drillthrough
+								
+			
+		
+</script>
+
+
+	</div>
+	</div>
+	</div>
+	<div class="col-md-7 col-xs-12 offset-md-5 id1"><div class="card-default shadow ">	<div class="card-body bgcolor" style="background:#ffffff" ;="">	<span class="d-flex justify-content-start mx-2 font-color" style="color:#000000;"> Tidewater 2026 Membership </span>		<!-- Analytics -->
+				
+		<!-- Sorting Data End -->
+
+  		<div id="col1" class="js-plotly-plot"><!-- chart will be drawn inside this DIV --><div class="plot-container plotly"><div class="svg-container" style="position: relative; width: 939.55px; height: 405px;"><svg class="main-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="939.5499877929688" height="405" style="background: rgb(255, 255, 255);"><defs id="defs-148f01"><g class="clips"><clipPath id="clip148f01xyplot" class="plotclip"><rect width="548.25" height="295"></rect></clipPath><clipPath id="clip148f01xy2plot" class="plotclip"><rect width="548.25" height="295"></rect></clipPath><clipPath class="axesclip" id="clip148f01x"><rect x="60" y="0" width="548.25" height="405"></rect></clipPath><clipPath class="axesclip" id="clip148f01y"><rect x="0" y="30" width="939.5499877929688" height="295"></rect></clipPath><clipPath class="axesclip" id="clip148f01xy"><rect x="60" y="30" width="548.25" height="295"></rect></clipPath><clipPath class="axesclip" id="clip148f01y2"><rect x="0" y="30" width="939.5499877929688" height="295"></rect></clipPath><clipPath class="axesclip" id="clip148f01xy2"><rect x="60" y="30" width="548.25" height="295"></rect></clipPath></g><g class="gradients"></g></defs><g class="bglayer"></g><g class="draglayer cursor-crosshair"><g class="xy"><rect class="nsewdrag drag" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="60" y="30" width="548.25" height="295"></rect><rect class="nwdrag drag cursor-nw-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="40" y="10" width="20" height="20"></rect><rect class="nedrag drag cursor-ne-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="608.25" y="10" width="20" height="20"></rect><rect class="swdrag drag cursor-sw-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="40" y="325" width="20" height="20"></rect><rect class="sedrag drag cursor-se-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="608.25" y="325" width="20" height="20"></rect><rect class="ewdrag drag cursor-ew-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="114.825" y="325.5" width="438.6" height="20"></rect><rect class="wdrag drag cursor-w-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="60" y="325.5" width="54.825" height="20"></rect><rect class="edrag drag cursor-e-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="553.425" y="325.5" width="54.825" height="20"></rect><rect class="nsdrag drag cursor-ns-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="39.5" y="59.5" width="20" height="236"></rect><rect class="sdrag drag cursor-s-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="39.5" y="295.5" width="20" height="29.5"></rect><rect class="ndrag drag cursor-n-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy" x="39.5" y="30" width="20" height="29.5"></rect></g><g class="xy2"><rect class="nsdrag drag cursor-ns-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy2" x="608.75" y="59.5" width="20" height="236"></rect><rect class="sdrag drag cursor-s-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy2" x="608.75" y="295.5" width="20" height="29.5"></rect><rect class="ndrag drag cursor-n-resize" style="fill: transparent; stroke-width: 0px; pointer-events: all;" data-subplot="xy2" x="608.75" y="30" width="20" height="29.5"></rect></g></g><g class="layer-below"><g class="imagelayer"></g><g class="shapelayer"></g></g><g class="cartesianlayer"><g class="subplot xy"><g class="layer-subplot"><g class="shapelayer"></g><g class="imagelayer"></g></g><g class="gridlayer"><g class="x"><path class="xgrid crisp" transform="translate(91.16,0)" d="M0,30v295" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(135.34,0)" d="M0,30v295" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(179.51,0)" d="M0,30v295" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(223.69,0)" d="M0,30v295" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(267.86,0)" d="M0,30v295" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(312.03999999999996,0)" d="M0,30v295" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(356.21,0)" d="M0,30v295" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(400.39,0)" d="M0,30v295" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(444.56,0)" d="M0,30v295" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(488.74,0)" d="M0,30v295" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(532.9100000000001,0)" d="M0,30v295" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(577.09,0)" d="M0,30v295" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path></g><g class="y"><path class="ygrid crisp" transform="translate(0,306.5)" d="M60,0h548.25" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ygrid crisp" transform="translate(0,245.07)" d="M60,0h548.25" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ygrid crisp" transform="translate(0,183.64)" d="M60,0h548.25" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ygrid crisp" transform="translate(0,122.21)" d="M60,0h548.25" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ygrid crisp" transform="translate(0,60.79)" d="M60,0h548.25" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path></g><g class="y2"><path class="y2grid crisp" transform="translate(0,242)" d="M60,0h548.25" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="y2grid crisp" transform="translate(0,177.5)" d="M60,0h548.25" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="y2grid crisp" transform="translate(0,113)" d="M60,0h548.25" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="y2grid crisp" transform="translate(0,48.5)" d="M60,0h548.25" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path></g></g><g class="zerolinelayer"><path class="y2zl zl crisp" transform="translate(0,306.5)" d="M60,0h548.25" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path></g><path class="xlines-below"></path><path class="ylines-below"></path><g class="overlines-below"><path class="xy2-x"></path><path class="xy2-y"></path></g><g class="xaxislayer-below"></g><g class="yaxislayer-below"></g><g class="overaxes-below"><g class="xy2-x"></g><g class="xy2-y"></g></g><g class="plot" transform="translate(60, 30)" clip-path="url('#clip148f01xyplot')"><g class="scatterlayer mlayer"><g class="trace scatter trace23daca" style="stroke-miterlimit: 2; opacity: 1;"><g class="fills"></g><g class="errorbars"></g><g class="lines"><path class="js-line" style="vector-effect: non-scaling-stroke; fill: none; stroke: rgb(164, 36, 59); stroke-opacity: 1; stroke-width: 2px; opacity: 1;" d="M31.16,276.5L75.34,239.64L119.51,227.36L163.69,227.36L207.86,79.93L252.04,129.07L296.21,92.21L340.39,92.21L384.56,55.36L428.74,79.93L472.91,67.64L517.09,18.5"></path></g><g class="points"><path class="point" transform="translate(31.16,276.5)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(75.34,239.64)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(119.51,227.36)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(163.69,227.36)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(207.86,79.93)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(252.04,129.07)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(296.21,92.21)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(340.39,92.21)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(384.56,55.36)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(428.74,79.93)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(472.91,67.64)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(517.09,18.5)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path></g><g class="text"></g></g></g></g><g class="overplot"><g class="xy2" transform="translate(60, 30)" clip-path="url('#clip148f01xy2plot')"><g class="scatterlayer mlayer"><g class="trace scatter traceb32e30" style="stroke-miterlimit: 2; opacity: 1;"><g class="fills"></g><g class="errorbars"></g><g class="lines"><path class="js-line" style="vector-effect: non-scaling-stroke; fill: none; stroke: rgb(219, 206, 61); stroke-opacity: 1; stroke-width: 2px; opacity: 1;" d="M31.16,276.5L75.34,147.5L119.51,212L163.69,276.5L207.86,18.5L252.04,244.25L296.21,244.25L384.56,244.25L428.74,276.5L472.91,212L517.09,179.75"></path></g><g class="points"><path class="point" transform="translate(31.16,276.5)" style="opacity: 1; stroke-width: 0px; fill: rgb(219, 206, 61); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(75.34,147.5)" style="opacity: 1; stroke-width: 0px; fill: rgb(219, 206, 61); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(119.51,212)" style="opacity: 1; stroke-width: 0px; fill: rgb(219, 206, 61); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(163.69,276.5)" style="opacity: 1; stroke-width: 0px; fill: rgb(219, 206, 61); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(207.86,18.5)" style="opacity: 1; stroke-width: 0px; fill: rgb(219, 206, 61); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(252.04,244.25)" style="opacity: 1; stroke-width: 0px; fill: rgb(219, 206, 61); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(296.21,244.25)" style="opacity: 1; stroke-width: 0px; fill: rgb(219, 206, 61); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(340.39,244.25)" style="opacity: 1; stroke-width: 0px; fill: rgb(219, 206, 61); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(384.56,244.25)" style="opacity: 1; stroke-width: 0px; fill: rgb(219, 206, 61); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(428.74,276.5)" style="opacity: 1; stroke-width: 0px; fill: rgb(219, 206, 61); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(472.91,212)" style="opacity: 1; stroke-width: 0px; fill: rgb(219, 206, 61); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path><path class="point" transform="translate(517.09,179.75)" style="opacity: 1; stroke-width: 0px; fill: rgb(219, 206, 61); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path></g><g class="text"></g></g></g></g></g><path class="xlines-above crisp" style="fill: none; stroke-width: 1px; stroke: rgb(68, 68, 68); stroke-opacity: 1;" d="M59,325.5H609.25"></path><path class="ylines-above crisp" style="fill: none; stroke-width: 1px; stroke: rgb(68, 68, 68); stroke-opacity: 1;" d="M59.5,30V325"></path><g class="overlines-above"><path class="xy2-x crisp" style="fill: none;" d="M0,0"></path><path class="xy2-y crisp" style="fill: none; stroke-width: 1px; stroke: rgb(68, 68, 68); stroke-opacity: 1;" d="M608.75,30V325"></path></g><g class="xaxislayer-above"><g class="xtick"><text text-anchor="start" x="0" y="340.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" data-unformatted="2026-01-02" data-math="N" transform="translate(91.16,0) rotate(30,0,334.4)">2026-01-02</text></g><g class="xtick"><text text-anchor="start" x="0" y="340.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" data-unformatted="2026-01-09" data-math="N" transform="translate(135.34,0) rotate(30,0,334.4)">2026-01-09</text></g><g class="xtick"><text text-anchor="start" x="0" y="340.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" data-unformatted="2026-01-16" data-math="N" transform="translate(179.51,0) rotate(30,0,334.4)">2026-01-16</text></g><g class="xtick"><text text-anchor="start" x="0" y="340.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" data-unformatted="2026-01-23" data-math="N" transform="translate(223.69,0) rotate(30,0,334.4)">2026-01-23</text></g><g class="xtick"><text text-anchor="start" x="0" y="340.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" data-unformatted="2026-01-30" data-math="N" transform="translate(267.86,0) rotate(30,0,334.4)">2026-01-30</text></g><g class="xtick"><text text-anchor="start" x="0" y="340.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" data-unformatted="2026-02-06" data-math="N" transform="translate(312.03999999999996,0) rotate(30,0,334.4)">2026-02-06</text></g><g class="xtick"><text text-anchor="start" x="0" y="340.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" data-unformatted="2026-02-13" data-math="N" transform="translate(356.21,0) rotate(30,0,334.4)">2026-02-13</text></g><g class="xtick"><text text-anchor="start" x="0" y="340.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" data-unformatted="2026-02-20" data-math="N" transform="translate(400.39,0) rotate(30,0,334.4)">2026-02-20</text></g><g class="xtick"><text text-anchor="start" x="0" y="340.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" data-unformatted="2026-02-27" data-math="N" transform="translate(444.56,0) rotate(30,0,334.4)">2026-02-27</text></g><g class="xtick"><text text-anchor="start" x="0" y="340.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" data-unformatted="2026-03-06" data-math="N" transform="translate(488.74,0) rotate(30,0,334.4)">2026-03-06</text></g><g class="xtick"><text text-anchor="start" x="0" y="340.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" data-unformatted="2026-03-13" data-math="N" transform="translate(532.9100000000001,0) rotate(30,0,334.4)">2026-03-13</text></g><g class="xtick"><text text-anchor="start" x="0" y="340.4" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" data-unformatted="2026-03-20" data-math="N" transform="translate(577.09,0) rotate(30,0,334.4)">2026-03-20</text></g></g><g class="yaxislayer-above"><g class="ytick"><text text-anchor="end" x="56.6" y="4.199999999999999" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" data-unformatted="240" data-math="N" transform="translate(0,306.5)">240</text></g><g class="ytick"><text text-anchor="end" x="56.6" y="4.199999999999999" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" data-unformatted="245" data-math="N" transform="translate(0,245.07)">245</text></g><g class="ytick"><text text-anchor="end" x="56.6" y="4.199999999999999" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" data-unformatted="250" data-math="N" transform="translate(0,183.64)">250</text></g><g class="ytick"><text text-anchor="end" x="56.6" y="4.199999999999999" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" data-unformatted="255" data-math="N" transform="translate(0,122.21)">255</text></g><g class="ytick"><text text-anchor="end" x="56.6" y="4.199999999999999" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" data-unformatted="260" data-math="N" transform="translate(0,60.79)">260</text></g></g><g class="overaxes-above"><g class="xy2-x"></g><g class="xy2-y"><g class="y2tick"><text text-anchor="start" x="611.65" y="4.199999999999999" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(219, 206, 61); fill-opacity: 1; white-space: pre;" data-unformatted="0" data-math="N" transform="translate(0,306.5)">0</text></g><g class="y2tick"><text text-anchor="start" x="611.65" y="4.199999999999999" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(219, 206, 61); fill-opacity: 1; white-space: pre;" data-unformatted="2" data-math="N" transform="translate(0,242)">2</text></g><g class="y2tick"><text text-anchor="start" x="611.65" y="4.199999999999999" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(219, 206, 61); fill-opacity: 1; white-space: pre;" data-unformatted="4" data-math="N" transform="translate(0,177.5)">4</text></g><g class="y2tick"><text text-anchor="start" x="611.65" y="4.199999999999999" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(219, 206, 61); fill-opacity: 1; white-space: pre;" data-unformatted="6" data-math="N" transform="translate(0,113)">6</text></g><g class="y2tick"><text text-anchor="start" x="611.65" y="4.199999999999999" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(219, 206, 61); fill-opacity: 1; white-space: pre;" data-unformatted="8" data-math="N" transform="translate(0,48.5)">8</text></g></g></g></g><g class="subplot xy2"></g></g><g class="polarlayer"></g><g class="ternarylayer"></g><g class="geolayer"></g><g class="funnelarealayer"></g><g class="pielayer"></g><g class="sunburstlayer"></g><g class="glimages"></g></svg><div class="gl-container"></div><svg class="main-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="939.5499877929688" height="405"><defs id="topdefs-148f01"><g class="clips"></g><clipPath id="legend148f01"><rect width="210" height="48" x="0" y="0"></rect></clipPath></defs><g class="indicatorlayer"></g><g class="layer-above"><g class="imagelayer"></g><g class="shapelayer"></g></g><g class="infolayer"><g class="legend" pointer-events="all" transform="translate(717.9, 30)"><rect class="bg" shape-rendering="crispEdges" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; fill: rgb(255, 255, 255); fill-opacity: 1; stroke-width: 0px;" width="210" height="48" x="0" y="0"></rect><g class="scrollbox" transform="translate(0, 0)" clip-path="url('#legend148f01')"><g class="groups"><g class="traces" style="opacity: 1;" transform="translate(0, 14.5)"><text class="legendtext user-select-none" text-anchor="start" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" x="40" y="4.680000000000001" data-unformatted="Members in Good Standing" data-math="N">Members in Good Standing</text><g class="layers" style="opacity: 1;"><g class="legendfill"></g><g class="legendlines"><path class="js-line" d="M5,0h30" style="fill: none; stroke: rgb(164, 36, 59); stroke-opacity: 1; stroke-width: 2px;"></path></g><g class="legendsymbols"><g class="legendpoints"><path class="scatterpts" transform="translate(20,0)" style="opacity: 1; stroke-width: 0px; fill: rgb(164, 36, 59); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path></g></g></g><rect class="legendtoggle" style="cursor: pointer; fill: rgb(0, 0, 0); fill-opacity: 0;" pointer-events="all" x="0" y="-9.5" width="250" height="19"></rect></g><g class="traces" style="opacity: 1;" transform="translate(0, 33.5)"><text class="legendtext user-select-none" text-anchor="start" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(0, 0, 0); fill-opacity: 1; white-space: pre;" x="40" y="4.680000000000001" data-unformatted="Joined in the last week" data-math="N">Joined in the last week</text><g class="layers" style="opacity: 1;"><g class="legendfill"></g><g class="legendlines"><path class="js-line" d="M5,0h30" style="fill: none; stroke: rgb(219, 206, 61); stroke-opacity: 1; stroke-width: 2px;"></path></g><g class="legendsymbols"><g class="legendpoints"><path class="scatterpts" transform="translate(20,0)" style="opacity: 1; stroke-width: 0px; fill: rgb(219, 206, 61); fill-opacity: 1;" d="M3,0A3,3 0 1,1 0,-3A3,3 0 0,1 3,0Z"></path></g></g></g><rect class="legendtoggle" style="cursor: pointer; fill: rgb(0, 0, 0); fill-opacity: 0;" pointer-events="all" x="0" y="-9.5" width="250" height="19"></rect></g></g></g><rect class="scrollbar" rx="20" ry="3" width="0" height="0" style="fill: rgb(128, 139, 164); fill-opacity: 1;" x="0" y="0"></rect></g><g class="g-gtitle"></g><g class="g-xtitle" transform="translate(0,18.483596801757812)"><text class="xtitle" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 14px; fill: rgb(0, 0, 0); opacity: 1; font-weight: normal; white-space: pre;" x="334.125" y="377" text-anchor="middle" data-unformatted="Date" data-math="N">Date</text></g><g class="g-ytitle"><text class="ytitle" transform="rotate(-90,22,177.5)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 14px; fill: rgb(0, 0, 0); opacity: 1; font-weight: normal; white-space: pre;" x="22" y="177.5" text-anchor="middle" data-unformatted="MIGS Count" data-math="N">MIGS Count</text></g><g class="g-y2title"><text class="y2title" transform="rotate(-90,653.25,177.5)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 14px; fill: rgb(219, 206, 61); opacity: 1; font-weight: normal; white-space: pre;" x="653.25" y="177.5" text-anchor="middle" data-unformatted="New members this week" data-math="N">New members this week</text></g></g><g class="menulayer"></g><g class="zoomlayer"></g></svg><div class="modebar-container" style="position: absolute; top: 0px; right: 0px; width: 100%;"><div id="modebar-148f01" class="modebar modebar--hover ease-bg"><div class="modebar-group"><a rel="tooltip" class="modebar-btn" data-title="Download graph" data-toggle="false" data-gravity="n"><svg viewBox="0 0 1000 1000" class="icon" height="1em" width="1em"><path d="m500 450c-83 0-150-67-150-150 0-83 67-150 150-150 83 0 150 67 150 150 0 83-67 150-150 150z m400 150h-120c-16 0-34 13-39 29l-31 93c-6 15-23 28-40 28h-340c-16 0-34-13-39-28l-31-94c-6-15-23-28-40-28h-120c-55 0-100-45-100-100v-450c0-55 45-100 100-100h800c55 0 100 45 100 100v450c0 55-45 100-100 100z m-400-550c-138 0-250 112-250 250 0 138 112 250 250 250 138 0 250-112 250-250 0-138-112-250-250-250z m365 380c-19 0-35 16-35 35 0 19 16 35 35 35 19 0 35-16 35-35 0-19-16-35-35-35z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a></div><div class="modebar-group"><a rel="tooltip" class="modebar-btn" data-title="Zoom in" data-attr="zoom" data-val="in" data-toggle="false" data-gravity="n"><svg viewBox="0 0 875 1000" class="icon" height="1em" width="1em"><path d="m1 787l0-875 875 0 0 875-875 0z m687-500l-187 0 0-187-125 0 0 187-188 0 0 125 188 0 0 187 125 0 0-187 187 0 0-125z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a><a rel="tooltip" class="modebar-btn" data-title="Zoom out" data-attr="zoom" data-val="out" data-toggle="false" data-gravity="n"><svg viewBox="0 0 875 1000" class="icon" height="1em" width="1em"><path d="m0 788l0-876 875 0 0 876-875 0z m688-500l-500 0 0 125 500 0 0-125z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a><a rel="tooltip" class="modebar-btn" data-title="Reset" data-attr="zoom" data-val="auto" data-toggle="false" data-gravity="n"><svg viewBox="0 0 1000 1000" class="icon" height="1em" width="1em"><path d="m250 850l-187 0-63 0 0-62 0-188 63 0 0 188 187 0 0 62z m688 0l-188 0 0-62 188 0 0-188 62 0 0 188 0 62-62 0z m-875-938l0 188-63 0 0-188 0-62 63 0 187 0 0 62-187 0z m875 188l0-188-188 0 0-62 188 0 62 0 0 62 0 188-62 0z m-125 188l-1 0-93-94-156 156 156 156 92-93 2 0 0 250-250 0 0-2 93-92-156-156-156 156 94 92 0 2-250 0 0-250 0 0 93 93 157-156-157-156-93 94 0 0 0-250 250 0 0 0-94 93 156 157 156-157-93-93 0 0 250 0 0 250z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a></div></div></div><svg class="main-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="939.5499877929688" height="405"><g class="hoverlayer"></g></svg></div></div></div><script>	
+		document.getElementById("tableModal-btn-csv-downoad").innerHTML = "CSV Download";
+		document.getElementById("tableModal-btn-pdf-downoad").innerHTML = "PDF Download";
+		document.getElementById("tableModal-btn-close").innerHTML = "Close";
+		(function(){
+		 window.PLOTLYENV={};
+
+                var gd = document.getElementById("col1")
+                var resizeDebounce = null;
+
+                function resizePlot() {
+                    var bb = gd.getBoundingClientRect();
+                    DashboardBuilder.relayout(gd, {
+                        width: bb.width,
+                        height: bb.height
+                    });
+                }
+
+                
+                window.addEventListener("resize", function() {
+                    if (resizeDebounce) {
+                        window.clearTimeout(resizeDebounce);
+                    }
+                    resizeDebounce = window.setTimeout(resizePlot, 100);
+                });
+
+							
+											
+	
+						var trace1 = {
+													  							 x: ["2026-01-02","2026-01-09","2026-01-16","2026-01-23","2026-01-30","2026-02-06","2026-02-13","2026-02-20","2026-02-27","2026-03-06","2026-03-13","2026-03-20"], 
+						  	 y: ["240","243","244","244","256","252","255","255","258","256","257","261"], 
+							 													  
+						  name:"Members in Good Standing",								
+						  line: {
+						  						  color: "#A4243B"	
+						  						  },  
+						  
+									  marker: {
+																					color: "#A4243B" ,
+																				        line: {
+																																						}
+									  },
+						
+							  
+						  						   
+						   						  						  	type: 'line',
+																					
+						};
+												
+
+												
+	
+						var trace2 = {
+													  							 x: ["2026-01-02","2026-01-09","2026-01-16","2026-01-23","2026-01-30","2026-02-06","2026-02-13","2026-02-20","2026-02-27","2026-03-06","2026-03-13","2026-03-20"], 
+						  	 y: [0,"4","2",0,"8","1","1","1","1",0,"2","3"], 
+							 													  
+						  name:"Joined in the last week",								
+						  line: {
+						  						  color: "#dbce3d"	
+						  						  },  
+						  
+									  marker: {
+																					color: "#dbce3d" ,
+																				        line: {
+																																						}
+									  },
+						
+							  
+						  							  yaxis: 'y2',
+						   						   
+						   						  						  	type: 'line',
+																					
+						};
+												
+
+											
+
+										
+					
+	
+					
+					
+					var data = [trace1,trace2,];
+					 		
+					var layout = {
+					title: false,
+										label: 'High',
+										font: {
+						color: '#000000'
+					  },
+					 					paper_bgcolor: '#ffffff',
+					plot_bgcolor: '#ffffff',
+					
+										 
+					 					       legend: {orientation: "v"},
+					 					 
+					 					   height: 405,
+					   					    width: 0,
+					   					  xaxis: {
+						title: 'Date',
+													
+							type: 'category',
+												showticklabels:true,
+													domain: [0, 0.85],
+												
+						showgrid: true, 
+						showline: true					  }, 
+					  yaxis: {
+						title: 'MIGS Count', 
+																		
+							categoryorder: 'array', 
+							categoryarray: ["240","243","244","244","256","252","255","255","258","256","257","261"],
+												side: 'left',
+						showticklabels:true,
+						showgrid: true, 
+						showline: true					  },
+					  
+				// for multiple yaxis 
+													yaxis2: {
+								title: 'New members this week',
+																titlefont: {color: '#dbce3d'},
+								tickfont: {color: '#dbce3d'},
+																overlaying: 'y',
+														
+								showticklabels:true,
+								showgrid: true, 
+								showline: true,
+																side: 'right'
+							  },
+						 			    // for multiple yaxis end 
+					  
+					   margin: {
+						l: 60, //20,
+						r: 20, //60,
+						b: 80,
+						t: 30,
+						pad: 0
+					  },
+					 					  barmode: 'group'
+					};
+					
+								
+					var toImage = {
+						  name: 'Download graph',
+						  icon: DashboardBuilder.Icons.camera,
+						  click: function(gd) {
+							DashboardBuilder.downloadImage(gd, {
+								filename: 'dashboardbuilder_line1',
+								format: 'png',
+								width: gd._fullLayout.width,
+								height: gd._fullLayout.height
+							  })
+						  }
+						}
+						
+					let tableIcon = {
+						'width':1800,
+						'height': 1500,
+						'path':"m15,12c0,.553-.448,1-1,1H6c-.552,0-1-.447-1-1s.448-1,1-1v-2c0-.553.448-1,1-1s1,.447,1,1v2h1v-5c0-.553.448-1,1-1s1,.447,1,1v5h1v-3c0-.553.448-1,1-1s1,.447,1,1v3c.552,0,1,.447,1,1Zm8.561,11.561c-.293.293-.677.439-1.061.439s-.768-.146-1.061-.439l-5.514-5.514c-1.66,1.225-3.703,1.959-5.92,1.959C4.492,20.006.006,15.52.006,10.006S4.492.006,10.006.006s10,4.486,10,10c0,2.217-.734,4.26-1.959,5.92l5.514,5.514c.586.586.586,1.535,0,2.121Zm-6.561-13.561c0-3.894-3.19-7.05-7.097-6.993-3.714.054-6.842,3.18-6.897,6.894-.058,3.907,3.098,7.099,6.993,7.099,3.831,0,7-3.169,7-7Z",
+						'transform': 'matrix(80 0 0 80 128 -0)'
+						}
+					var xaxisCol = ["List_Date","List_Date"];
+					var yaxisCol = ["MIGS_Count","Joined_Within_7_Days"];
+										var llm = '';
+					var toTable = {
+						name: 'Analyze Data',
+						icon: tableIcon,
+						click: () => { showTable(data, 1,xaxisCol, yaxisCol, 'Tidewater 2026 Membership', llm, layout )}
+					}
+					
+																	let barbuttons =  [[toImage],['zoomIn2d','zoomOut2d','autoScale2d']];
+													
+					var modeBarManage = {
+					modeBarButtonsToRemove: ['sendDataToCloud'],
+					modeBarButtons: barbuttons,
+					displaylogo: false,
+						showLink: false,
+						plotlyServerURL: "https://dashboardbuilder.net/data-visualization-tool",
+						linkText: 'Powered by DashboardBuilder.net'
+					
+					};
+					
+		
+					DashboardBuilder.newPlot(gd, data, layout,   modeBarManage,{responsive: true} );
+					}());
+
+					var modebarButtons = document.getElementById("col1").querySelectorAll(".modebar-btn");
+					
+					var modebarButtonDataTitles={
+									zoomIn : "Zoom in",
+									zoomOut : "Zoom out",
+									autoscale: "Autoscale",
+					}
+					
+					
+					for (i = 0; i < modebarButtons.length; i++) {
+						
+						var dataTitle = modebarButtons[i].attributes["data-title"].value;
+					  if(dataTitle == modebarButtonDataTitles.zoomIn){  
+							modebarButtons[i].attributes["data-title"].value="Zoom in";
+						}
+					  else if(dataTitle == modebarButtonDataTitles.zoomOut){
+						modebarButtons[i].attributes["data-title"].value="Zoom out";
+					  }
+					  else if(dataTitle == modebarButtonDataTitles.autoscale){
+						modebarButtons[i].attributes["data-title"].value="Reset";
+					  }
+						
+					}
+				
+				//drillthrough
+								
+			
+		
+</script>
+
+
+	</div>
+	</div>
+	</div>
+	    </div></div>
+</div><svg id="js-plotly-tester" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="position: absolute; left: -10000px; top: -10000px; width: 9000px; height: 9000px; z-index: 1;"><path class="js-reference-point" d="M0,0H1V1H0Z" style="stroke-width: 0px; fill: black;"></path></svg><svg id="js-plotly-tester" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="position: absolute; left: -10000px; top: -10000px; width: 9000px; height: 9000px; z-index: 1;"><path class="js-reference-point" d="M0,0H1V1H0Z" style="stroke-width: 0px; fill: black;"></path></svg><svg id="js-plotly-tester" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="position: absolute; left: -10000px; top: -10000px; width: 9000px; height: 9000px; z-index: 1;"><path class="js-reference-point" d="M0,0H1V1H0Z" style="stroke-width: 0px; fill: black;"></path></svg>
+
+
+
+
+	
+
+
+</body></html>
